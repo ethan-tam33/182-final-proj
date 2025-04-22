@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 from tqdm import tqdm
 import numpy as np
 import torch.nn.functional as F
+import esm
 
 @dataclass
 class ModelOutput:
@@ -149,8 +150,8 @@ def calculate_cross_entropy(model_output, batch_tokens, batch_attn_mask):
         losses.append(loss.item())
     return losses
 
-def CE_from_sae_recon(esm_model, nnsight_model, tokenized_batches, hidden_layer_idx,
-                      sae_model, device):
+def CE_from_sae_recon(esm_model, tokenized_batches, hidden_layer_idx,
+                      sae_model=None, device=torch.device('cpu')):
     """Calculate cross entropy using SAE reconstructions."""
     sae_losses = []
 
@@ -162,13 +163,18 @@ def CE_from_sae_recon(esm_model, nnsight_model, tokenized_batches, hidden_layer_
             esm_model, batch_tokens, batch_attn_mask, hidden_layer_idx
         )
 
-        reconstructions = sae_model(orig_hidden)
-        sae_logits, _ = get_model_output_no_nnsight(
-            esm_model, batch_tokens, batch_attn_mask,
-            hidden_layer_idx, reconstructions
-        )
+        # reconstructions = sae_model(orig_hidden)
+        # sae_logits, _ = get_model_output_no_nnsight(
+        #     esm_model, batch_tokens, batch_attn_mask,
+        #     hidden_layer_idx, reconstructions
+        # )
 
-        sae_losses.extend(calculate_cross_entropy(
-            sae_logits, batch_tokens, batch_attn_mask))
+        # sae_losses.extend(calculate_cross_entropy(
+        #     sae_logits, batch_tokens, batch_attn_mask))
 
-    return np.mean(sae_losses)
+    # return np.mean(sae_losses)
+
+if __name__ == "__main__":
+    model, alphabet = esm.pretrained.esm2_t6_8M_UR50D()
+    batch_converter = alphabet.get_batch_converter()
+    model.eval()  # disables dropout for deterministic results
