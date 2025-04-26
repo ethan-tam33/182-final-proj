@@ -1,12 +1,12 @@
 
 import torch
-from transformers import EsmForMaskedLM
+from transformers import EsmForMaskedLM, AutoTokenizer, AutoModelForMaskedLM
 from dataclasses import dataclass
 from typing import Optional, Tuple
 from tqdm import tqdm
 import numpy as np
 import torch.nn.functional as F
-import esm
+from torch.utils.data import DataLoader, TensorDataset
 
 @dataclass
 class ModelOutput:
@@ -101,6 +101,7 @@ class HookedESM:
         """Run forward pass with optional hidden state modification at specified layer."""
         
         layer_name, override_param = self.__get_layer_info(layer_idx)
+
         module = dict(self.model.named_modules())[layer_name]
         
         # Create and register hook
@@ -162,6 +163,7 @@ def CE_from_sae_recon(esm_model, tokenized_batches, hidden_layer_idx,
         _, orig_hidden = get_model_output_no_nnsight(
             esm_model, batch_tokens, batch_attn_mask, hidden_layer_idx
         )
+        print(orig_hidden.shape)
 
         # reconstructions = sae_model(orig_hidden)
         # sae_logits, _ = get_model_output_no_nnsight(
@@ -175,6 +177,30 @@ def CE_from_sae_recon(esm_model, tokenized_batches, hidden_layer_idx,
     # return np.mean(sae_losses)
 
 if __name__ == "__main__":
-    model, alphabet = esm.pretrained.esm2_t6_8M_UR50D()
-    batch_converter = alphabet.get_batch_converter()
-    model.eval()  # disables dropout for deterministic results
+    model = AutoModelForMaskedLM.from_pretrained("facebook/esm2_t6_8M_UR50D")
+    tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
+
+    data = [
+        ("protein1", "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"),
+        ("protein2", "KALTARQQEVFDLIRDHISQTGMPPTRAEIAQRLGFRSPNAAEEHLKALARKGVIEIVSGASRGIRLLQEE"),
+        ("protein2 with mask","KALTARQQEVFDLIRD<mask>ISQTGMPPTRAEIAQRLGFRSPNAAEEHLKALARKGVIEIVSGASRGIRLLQEE"),
+        ("protein3",  "K A <mask> I S Q"),
+    ]
+    sequences = [seq for _, seq in data]
+
+    tokenized = tokenizer(
+        sequences,
+        return_tensors="pt",         # return PyTorch tensors
+        padding=True,                # pad to the longest sequence
+        truncation=True,             # truncate if necessary
+        add_special_tokens=True      # add CLS, SEP if the model expects it
+    )
+
+    # Create a TensorDataset
+    dataset = TensorDataset(tokenized["input_ids"], tokenized["attention_mask"])
+
+    # Create a DataLoader with batch_size
+    batch_size = 2
+    tokenized_batches_list = DataLoader(dataset, batch_size=batch_size)
+
+    CE_from_sae_recon(model, tokenized_batches_list, 6)
