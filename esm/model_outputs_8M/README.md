@@ -62,21 +62,15 @@ Load any representation or contact map with:
 import torch
 
 # token-level hidden states for sequence 0
-tok = torch.load("sample_outputs/token_representations/0.pt")      # (L, 320)
+tok = torch.load("sample_outputs/token_representations/UniRef50_A0A318QM10.pt")      # (L, 320)
 
 # mean-pooled sequence embedding for sequence 0
-seq = torch.load("sample_outputs/sequence_representations/0.pt")   # (320,)
+seq = torch.load("sample_outputs/sequence_representations/UniRef50_A0A318QM10.pt")   # (320,)
 
 # contact probability matrix for sequence 0
-cmap = torch.load("sample_outputs/contact/0.pt")                   # (L, L)
+cmap = torch.load("sample_outputs/contact/UniRef50_A0A318QM10.pt")                   # (L, L)
 ```
 ```python
-import numpy as np
-
-tok = np.load("sample_outputs/token_representations/0.npz")["repr"]
-seq = np.load("sample_outputs/sequence_representations/0.npz")["repr"]
-cmap = np.load("sample_outputs/contact/0.npz")["contacts"]
-```
 
 ## Re‑generation
 
