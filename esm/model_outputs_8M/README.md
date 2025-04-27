@@ -42,16 +42,15 @@ Columns:
 | Charge at pH:7.0 | Net charge at physiological pH |
 
 ### `UniRef50_n1645.csv`
-Contains the same identifiers plus **biochemical features** computed via `Bio.SeqUtils.ProtParam.ProteinAnalysis`:
+Contains: 
 
-* `molecular_weight`
-* `aromaticity`
-* `gravy` (hydrophobicity)
-* `instability_index`
-* `isoelectric_point`
-* `flexibility`
-
-Unparsable sequences (e.g. containing X/U/B) have `NaN` values.
+| column | description |
+| ------ | ----------- |
+| Name | Sequence identifier (portion of FASTA header before the first space) |
+| Sequence | Amino‑acid sequence |
+| Token Representations | relative path to the per‑residue tensor (`sample_outputs/token_representations/`) |
+| Sequence Representations | relative path to the mean‑pooled embedding tensor (`sample_outputs/sequence_representations/`) |
+| Contacts | relative path to the contact‑probability tensor (`sample_outputs/contact/`) |
 
 ## File formats
 All tensors are stored as **PyTorch `.pt` files** saved with `torch.save`. Each file holds a single tensor of type `float32`.
